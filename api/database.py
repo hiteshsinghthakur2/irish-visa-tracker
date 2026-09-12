@@ -3,7 +3,7 @@ from sqlalchemy import create_engine, text
 import datetime
 
 # Fallback to local SQLite if DATABASE_URL or POSTGRES_URL are not set
-DATABASE_URL = os.getenv("POSTGRES_URL", os.getenv("DATABASE_URL", "sqlite:///visa_tracker.db"))
+DATABASE_URL = os.getenv("POSTGRES_URL", os.getenv("DATABASE_URL", "sqlite:////tmp/visa_tracker.db"))
 
 # Vercel/Heroku Postgres URL fix for SQLAlchemy compatibility
 if DATABASE_URL.startswith("postgres://"):
