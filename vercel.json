@@ -1,0 +1,20 @@
+{
+  "buildCommand": "echo 'No build command needed for Python API'",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/api/main.py"
+    }
+  ],
+  "functions": {
+    "api/**/*.py": {
+      "maxDuration": 60
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/force-sync",
+      "schedule": "0 0 * * *"
+    }
+  ]
+}

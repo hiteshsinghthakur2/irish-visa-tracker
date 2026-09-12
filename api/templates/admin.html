@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Visa Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 min-h-screen font-sans text-gray-800 flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-gray-900 shadow-sm py-4 text-white">
+        <div class="max-w-6xl mx-auto px-4 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-lock text-green-400"></i>
+                <h1 class="text-xl font-bold">Admin Dashboard</h1>
+            </div>
+            <a href="/" class="text-gray-300 hover:text-white transition-colors text-sm font-medium">
+                &larr; Back to Public Tracker
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow p-4 max-w-6xl mx-auto w-full mt-6">
+        
+        <div id="auth-panel" class="bg-white rounded-xl shadow-md w-full max-w-md mx-auto p-8 text-center transition-all">
+            <h2 class="text-lg font-semibold mb-4 text-gray-700">Admin Login</h2>
+            <form id="login-form" class="space-y-4">
+                <input type="password" id="admin-token" 
+                    class="block w-full px-4 py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none" 
+                    placeholder="Enter Admin API Token" required>
+                <button type="submit" class="w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-3 px-4 rounded-lg transition-colors">
+                    Access Records
+                </button>
+            </form>
+            <p id="login-error" class="text-red-500 text-sm mt-3 hidden">Invalid token.</p>
+        </div>
+
+        <div id="records-panel" class="bg-white rounded-xl shadow-md w-full p-6 hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-semibold text-gray-800">Scraped Decision Records</h2>
+                <div class="flex gap-2">
+                    <button id="force-sync-btn" class="text-sm bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded flex items-center gap-2 transition-colors font-medium shadow-sm">
+                        <i class="fa-solid fa-cloud-arrow-down"></i> Force Sync Now
+                    </button>
+                    <button id="refresh-btn" class="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded flex items-center gap-2 transition-colors">
+                        <i class="fa-solid fa-rotate-right"></i> Refresh
+                    </button>
+                </div>
+            </div>
+            <p id="sync-status-msg" class="text-sm mb-4 hidden"></p>
+            
+            <div class="overflow-x-auto rounded-lg border border-gray-200">
+                <table class="min-w-full divide-y divide-gray-200 text-sm text-left">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 font-semibold text-gray-700">IRL Number</th>
+                            <th scope="col" class="px-6 py-3 font-semibold text-gray-700">Status</th>
+                            <th scope="col" class="px-6 py-3 font-semibold text-gray-700">Decision Date</th>
+                            <th scope="col" class="px-6 py-3 font-semibold text-gray-700">Last Synced (UTC)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="records-table-body" class="bg-white divide-y divide-gray-200">
+                        <!-- Dynamic Rows -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-4 text-sm text-gray-500" id="records-count"></div>
+        </div>
+
+    </main>
+
+    <script>
+        let apiToken = "";
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const token = document.getElementById('admin-token').value.trim();
+            if (!token) return;
+
+            apiToken = token;
+            await loadRecords();
+        });
+
+        document.getElementById('refresh-btn').addEventListener('click', () => {
+            loadRecords();
+        });
+
+        document.getElementById('force-sync-btn').addEventListener('click', async () => {
+            const btn = document.getElementById('force-sync-btn');
+            const msg = document.getElementById('sync-status-msg');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Syncing...';
+            msg.className = "text-sm mb-4 text-blue-600 font-medium";
+            msg.textContent = "Pulling latest data from Embassy... (this may take up to 30 seconds)";
+            msg.classList.remove('hidden');
+
+            try {
+                const res = await fetch('/api/force-sync', {
+                    method: 'POST',
+                    headers: { 'x-token': apiToken }
+                });
+                const data = await res.json();
+                
+                if (res.ok) {
+                    msg.className = "text-sm mb-4 text-green-600 font-medium";
+                    msg.textContent = `Success! ${data.message}. Records processed: ${data.records_processed}. Emails sent: ${data.notifications_sent}.`;
+                    loadRecords(); // reload table to see updated timestamps
+                } else {
+                    msg.className = "text-sm mb-4 text-red-600 font-medium";
+                    msg.textContent = `Sync failed: ${data.detail || data.error || 'Unknown error'}`;
+                }
+            } catch (err) {
+                msg.className = "text-sm mb-4 text-red-600 font-medium";
+                msg.textContent = `Network error during sync.`;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-down"></i> Force Sync Now';
+            }
+        });
+
+        async function loadRecords() {
+            document.getElementById('login-error').classList.add('hidden');
+            const tbody = document.getElementById('records-table-body');
+            const countEl = document.getElementById('records-count');
+            
+            try {
+                const res = await fetch('/api/admin/records', {
+                    headers: {
+                        'x-token': apiToken
+                    }
+                });
+
+                if (res.status === 401) {
+                    document.getElementById('login-error').classList.remove('hidden');
+                    return;
+                }
+                
+                if (!res.ok) throw new Error("Failed to fetch records.");
+
+                const data = await res.json();
+                
+                // Show records panel
+                document.getElementById('auth-panel').classList.add('hidden');
+                document.getElementById('records-panel').classList.remove('hidden');
+
+                tbody.innerHTML = "";
+                countEl.textContent = `Showing ${data.length} records.`;
+
+                data.forEach(record => {
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-gray-50";
+
+                    let statusClass = "text-gray-800 bg-gray-100";
+                    const s = record.status.toLowerCase();
+                    if (s.includes('approv') || s.includes('grant')) statusClass = "text-green-800 bg-green-100";
+                    else if (s.includes('refus') || s.includes('reject')) statusClass = "text-red-800 bg-red-100";
+
+                    tr.innerHTML = `
+                        <td class="px-6 py-4 font-mono font-medium text-gray-900">${record.irl_number}</td>
+                        <td class="px-6 py-4"><span class="px-2 py-1 rounded-md text-xs font-bold uppercase ${statusClass}">${record.status}</span></td>
+                        <td class="px-6 py-4 text-gray-600">${record.decision_date}</td>
+                        <td class="px-6 py-4 text-gray-500 text-xs">${new Date(record.last_updated).toLocaleString()}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+            } catch (err) {
+                console.error(err);
+                alert("An error occurred while fetching records.");
+            }
+        }
+    </script>
+</body>
+</html>

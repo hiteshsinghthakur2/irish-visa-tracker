@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+requests
+beautifulsoup4
+pandas
+odfpy
+SQLAlchemy
+psycopg2-binary

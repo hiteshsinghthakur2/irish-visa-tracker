@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Irish Visa Tracker (New Delhi)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 min-h-screen font-sans text-gray-800 flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm py-6 relative">
+        <div class="max-w-4xl mx-auto px-4 flex items-center justify-center gap-3">
+            <svg class="w-8 h-8 text-green-700" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+            <h1 class="text-3xl font-bold text-gray-900">Irish Visa Tracker</h1>
+        </div>
+        <!-- Admin link hidden in top right -->
+        <a href="/admin" class="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition-colors" title="Admin Dashboard">
+            <i class="fa-solid fa-lock"></i>
+        </a>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow flex flex-col items-center justify-center p-4 max-w-2xl mx-auto w-full">
+        
+        <div class="bg-white rounded-2xl shadow-xl w-full p-8 md:p-12 transition-all duration-300">
+            <h2 class="text-xl font-semibold mb-6 text-center text-gray-700">Check Your Application Status</h2>
+            
+            <form id="search-form" class="space-y-4">
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-passport text-gray-400"></i>
+                    </div>
+                    <input type="text" id="irl-input" 
+                        class="block w-full pl-10 pr-4 py-4 text-lg border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-green-500/20 focus:border-green-600 focus:outline-none transition-colors" 
+                        placeholder="Reference No. (e.g. 60395562 or IRL60395562)" 
+                        required>
+                </div>
+                
+                <button type="submit" 
+                    class="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-4 px-6 rounded-xl transition-colors duration-200 shadow-md flex items-center justify-center gap-2">
+                    <span id="btn-text">Check Status</span>
+                    <i id="btn-spinner" class="fa-solid fa-circle-notch fa-spin hidden"></i>
+                </button>
+            </form>
+
+            <!-- Dynamic Result Area -->
+            <div id="result-container" class="mt-8 hidden">
+                <div id="result-card" class="rounded-xl p-6 border-l-4 shadow-sm flex flex-col gap-2">
+                    <div class="flex items-center justify-between border-b pb-4 mb-2">
+                        <span class="text-sm font-medium text-gray-500 uppercase tracking-wider">Reference No.</span>
+                        <span id="res-irl" class="font-mono font-bold text-lg text-gray-800"></span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm font-medium text-gray-500 uppercase tracking-wider">Status</span>
+                        <span id="res-status" class="px-4 py-1.5 rounded-full font-bold text-sm tracking-wide text-center"></span>
+                    </div>
+
+                    <div id="date-row" class="flex items-center justify-between mt-2">
+                        <span class="text-sm font-medium text-gray-500 uppercase tracking-wider">Decision Date</span>
+                        <span id="res-date" class="font-medium text-gray-700"></span>
+                    </div>
+                    
+                    <p id="res-msg" class="text-gray-600 mt-4 text-center hidden font-medium"></p>
+                    
+                    <!-- Notification Subscription UI (From Search) -->
+                    <div id="notify-block" class="mt-4 border-t pt-4 hidden">
+                        <p id="notify-prompt" class="text-sm text-gray-600 mb-3 text-center font-medium">Want to know immediately when a decision is made?</p>
+                        <form id="subscribe-form" class="flex flex-col sm:flex-row gap-2">
+                            <div class="relative flex-grow">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fa-solid fa-envelope text-gray-400"></i>
+                                </div>
+                                <input type="email" id="notify-email" class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-600 focus:outline-none text-sm" placeholder="Your Email Address" required>
+                                <input type="hidden" id="notify-irl-hidden">
+                            </div>
+                            <button type="submit" class="bg-gray-800 hover:bg-gray-900 text-white font-medium py-2.5 px-4 rounded-lg text-sm transition-colors whitespace-nowrap">
+                                <span id="subscribe-btn-text"><i class="fa-solid fa-bell mr-1"></i> Notify Me</span>
+                            </button>
+                        </form>
+                        <p id="subscribe-msg" class="text-xs text-center mt-2 hidden"></p>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+        <!-- NEW: Dedicated Email Alert Section -->
+        <div class="bg-white rounded-2xl shadow-xl w-full p-8 md:p-10 transition-all duration-300 mt-6 border-t-4 border-green-700">
+            <h2 class="text-xl font-semibold mb-2 text-center text-gray-700">Automated Email Alerts</h2>
+            <p class="text-sm text-gray-500 text-center mb-6">Enter your details to get notified the exact moment your decision is published. If it's already published, we'll email you a copy right now.</p>
+            
+            <form id="direct-subscribe-form" class="space-y-4">
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-passport text-gray-400"></i>
+                    </div>
+                    <input type="text" id="direct-irl" 
+                        class="block w-full pl-10 pr-4 py-3 text-md border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-green-500/20 focus:border-green-600 focus:outline-none transition-colors" 
+                        placeholder="Reference No. (e.g. 60395562)" 
+                        required>
+                </div>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-envelope text-gray-400"></i>
+                    </div>
+                    <input type="email" id="direct-email" 
+                        class="block w-full pl-10 pr-4 py-3 text-md border-2 border-gray-200 rounded-xl focus:ring-4 focus:ring-green-500/20 focus:border-green-600 focus:outline-none transition-colors" 
+                        placeholder="Your Email Address" 
+                        required>
+                </div>
+                <button type="submit" 
+                    class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-6 rounded-xl transition-colors duration-200 shadow-md flex items-center justify-center gap-2">
+                    <span id="direct-btn-text"><i class="fa-solid fa-bell"></i> Set Up Alert</span>
+                </button>
+                <p id="direct-subscribe-msg" class="text-sm text-center mt-2 hidden font-medium"></p>
+            </form>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-6 text-center text-sm text-gray-500 flex flex-col items-center gap-3">
+        <p>Data sourced automatically from the Embassy of Ireland, New Delhi.</p>
+        <div class="flex flex-col items-center gap-1">
+            <div class="flex items-center gap-2">
+                <p id="footer-sync" class="font-mono bg-gray-200 px-3 py-1.5 rounded-md text-xs">Last Sync: Loading...</p>
+                <button onclick="fetchStatus(this)" class="text-xs bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-md transition-colors shadow-md font-medium flex items-center gap-2" title="Refresh Status">
+                    <i class="fa-solid fa-rotate-right"></i> Refresh
+                </button>
+            </div>
+            <p id="refresh-feedback" class="text-xs text-green-600 font-medium h-4 opacity-0 transition-opacity duration-300">Status successfully updated!</p>
+        </div>
+        <a id="download-btn" href="#" target="_blank" class="hidden text-green-700 hover:text-green-800 font-medium underline flex items-center gap-1 transition-colors">
+            <i class="fa-solid fa-file-excel"></i> Download Original Excel List
+        </a>
+    </footer>
+
+    <!-- Async API Handlers -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchStatus();
+
+            document.getElementById('search-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const irlInput = document.getElementById('irl-input').value.trim();
+                if (!irlInput) return;
+
+                setLoading(true);
+                hideResult();
+
+                try {
+                    const response = await fetch(`/api/check/${encodeURIComponent(irlInput)}`);
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        showResult(irlInput, data);
+                    } else {
+                        showError(data.detail || "An error occurred.");
+                    }
+                } catch (err) {
+                    showError("Network error. Please try again later.");
+                } finally {
+                    setLoading(false);
+                }
+            });
+
+            // Subscription form handler
+            document.getElementById('subscribe-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('notify-email').value.trim();
+                const irl = document.getElementById('notify-irl-hidden').value;
+                const msgEl = document.getElementById('subscribe-msg');
+                const btn = e.target.querySelector('button');
+
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
+
+                try {
+                    const res = await fetch('/api/subscribe', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ irl_number: irl, email: email })
+                    });
+                    const data = await res.json();
+                    
+                    msgEl.classList.remove('hidden');
+                    if (res.ok) {
+                        msgEl.className = "text-xs text-center mt-3 text-green-600 font-medium";
+                        msgEl.textContent = data.message;
+                        document.getElementById('notify-email').value = "";
+                    } else {
+                        msgEl.className = "text-xs text-center mt-3 text-red-600 font-medium";
+                        msgEl.textContent = data.detail || data.message || "Failed to subscribe.";
+                    }
+                } catch (err) {
+                    msgEl.classList.remove('hidden');
+                    msgEl.className = "text-xs text-center mt-3 text-red-600 font-medium";
+                    msgEl.textContent = "Network error while subscribing.";
+                } finally {
+                    btn.disabled = false;
+                    const isFoundText = document.getElementById('res-status').textContent === "PROCESSING / NOT PUBLISHED" ? 
+                        '<i class="fa-solid fa-bell mr-1"></i> Notify Me' : 
+                        '<i class="fa-solid fa-envelope mr-1"></i> Send Email';
+                    btn.innerHTML = `<span id="subscribe-btn-text">${isFoundText}</span>`;
+                }
+            });
+
+            // Direct Subscription form handler
+            document.getElementById('direct-subscribe-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const irl = document.getElementById('direct-irl').value.trim();
+                const email = document.getElementById('direct-email').value.trim();
+                const msgEl = document.getElementById('direct-subscribe-msg');
+                const btn = e.target.querySelector('button');
+                const btnText = document.getElementById('direct-btn-text');
+
+                btn.disabled = true;
+                btnText.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Setting up...';
+
+                try {
+                    const res = await fetch('/api/subscribe', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ irl_number: irl, email: email })
+                    });
+                    const data = await res.json();
+                    
+                    msgEl.classList.remove('hidden');
+                    if (res.ok) {
+                        msgEl.className = "text-sm text-center mt-3 text-green-600 font-medium";
+                        msgEl.textContent = data.message;
+                        document.getElementById('direct-email').value = "";
+                        document.getElementById('direct-irl').value = "";
+                    } else {
+                        msgEl.className = "text-sm text-center mt-3 text-red-600 font-medium";
+                        msgEl.textContent = data.detail || data.message || "Failed to subscribe.";
+                    }
+                } catch (err) {
+                    msgEl.classList.remove('hidden');
+                    msgEl.className = "text-sm text-center mt-3 text-red-600 font-medium";
+                    msgEl.textContent = "Network error while subscribing.";
+                } finally {
+                    btn.disabled = false;
+                    btnText.innerHTML = '<i class="fa-solid fa-bell"></i> Set Up Alert';
+                }
+            });
+        });
+
+        async function fetchStatus(buttonElement = null) {
+            const feedback = document.getElementById('refresh-feedback');
+            try {
+                if (buttonElement) {
+                    const icon = buttonElement.querySelector('i');
+                    if (icon) icon.classList.add('fa-spin');
+                }
+                const res = await fetch('/api/status');
+                const data = await res.json();
+                
+                let dateStr = "Never";
+                if (data.last_sync && data.last_sync !== "None") {
+                    const date = new Date(data.last_sync + 'Z');
+                    dateStr = date.toLocaleString();
+                }
+                
+                document.getElementById('footer-sync').textContent = `Database Sync: ${dateStr} | Records: ${data.total_records}`;
+                
+                if (data.latest_ods_link && data.latest_ods_link !== "#") {
+                    const dlBtn = document.getElementById('download-btn');
+                    dlBtn.href = data.latest_ods_link;
+                    dlBtn.classList.remove('hidden');
+                }
+
+                if (buttonElement && feedback) {
+                    feedback.textContent = "Status successfully updated!";
+                    feedback.classList.remove('opacity-0', 'text-red-600');
+                    feedback.classList.add('text-green-600');
+                    setTimeout(() => feedback.classList.add('opacity-0'), 2500);
+                }
+            } catch (err) {
+                document.getElementById('footer-sync').textContent = "Database Sync: Status Unavailable";
+                if (buttonElement && feedback) {
+                    feedback.textContent = "Failed to update status.";
+                    feedback.classList.remove('opacity-0', 'text-green-600');
+                    feedback.classList.add('text-red-600');
+                    setTimeout(() => feedback.classList.add('opacity-0'), 2500);
+                }
+            } finally {
+                if (buttonElement) {
+                    const icon = buttonElement.querySelector('i');
+                    if (icon) icon.classList.remove('fa-spin');
+                }
+            }
+        }
+
+        function setLoading(isLoading) {
+            const btnText = document.getElementById('btn-text');
+            const spinner = document.getElementById('btn-spinner');
+            const btn = document.querySelector('button[type="submit"]');
+
+            if (isLoading) {
+                btnText.textContent = "Checking...";
+                spinner.classList.remove('hidden');
+                btn.disabled = true;
+                btn.classList.add('opacity-80');
+            } else {
+                btnText.textContent = "Check Status";
+                spinner.classList.add('hidden');
+                btn.disabled = false;
+                btn.classList.remove('opacity-80');
+            }
+        }
+
+        function hideResult() {
+            document.getElementById('result-container').classList.add('hidden');
+            document.getElementById('subscribe-msg').classList.add('hidden');
+        }
+
+        function showResult(rawIrl, data) {
+            const container = document.getElementById('result-container');
+            const card = document.getElementById('result-card');
+            const statusBadge = document.getElementById('res-status');
+            const dateRow = document.getElementById('date-row');
+            const msgEl = document.getElementById('res-msg');
+            const notifyBlock = document.getElementById('notify-block');
+            const notifyPrompt = document.getElementById('notify-prompt');
+            const subscribeBtnText = document.getElementById('subscribe-btn-text');
+
+            let displayIrl = rawIrl.toUpperCase();
+            if (!displayIrl.startsWith("IRL")) {
+                const cleanNum = displayIrl.replace(/[^a-zA-Z0-9]/g, '');
+                displayIrl = "IRL" + cleanNum;
+            }
+            document.getElementById('res-irl').textContent = displayIrl;
+            document.getElementById('notify-irl-hidden').value = displayIrl; // Setup for subscription
+            
+            // Reset state
+            card.className = "rounded-xl p-6 border-l-4 shadow-sm flex flex-col gap-2 transition-all";
+            statusBadge.className = "px-4 py-1.5 rounded-full font-bold text-sm tracking-wide text-center";
+            dateRow.classList.remove('hidden');
+            msgEl.classList.add('hidden');
+            notifyBlock.classList.remove('hidden'); // ALWAYS show it now
+            msgEl.textContent = "";
+
+            if (data.found) {
+                const statusStr = data.status.toLowerCase();
+                document.getElementById('res-date').textContent = data.date || "N/A";
+                statusBadge.textContent = data.status;
+                
+                notifyPrompt.textContent = "Email a copy of this decision to yourself:";
+                subscribeBtnText.innerHTML = '<i class="fa-solid fa-envelope mr-1"></i> Send Email';
+
+                if (statusStr.includes('approv') || statusStr.includes('grant')) {
+                    card.classList.add('border-green-500', 'bg-green-50');
+                    statusBadge.classList.add('bg-green-200', 'text-green-800');
+                } else if (statusStr.includes('refus') || statusStr.includes('reject')) {
+                    card.classList.add('border-red-500', 'bg-red-50');
+                    statusBadge.classList.add('bg-red-200', 'text-red-800');
+                } else {
+                    card.classList.add('border-gray-500', 'bg-gray-50');
+                    statusBadge.classList.add('bg-gray-200', 'text-gray-800');
+                }
+            } else {
+                // Pending Logic
+                card.classList.add('border-yellow-400', 'bg-yellow-50');
+                statusBadge.textContent = "PROCESSING / NOT PUBLISHED";
+                statusBadge.classList.add('bg-yellow-200', 'text-yellow-800');
+                dateRow.classList.add('hidden');
+                
+                msgEl.classList.remove('hidden');
+                msgEl.textContent = data.message;
+
+                // Show notification signup for pending
+                notifyPrompt.textContent = "Want to know immediately when a decision is made?";
+                subscribeBtnText.innerHTML = '<i class="fa-solid fa-bell mr-1"></i> Notify Me';
+            }
+
+            container.classList.remove('hidden');
+        }
+
+        function showError(msg) {
+            const container = document.getElementById('result-container');
+            const card = document.getElementById('result-card');
+            
+            card.className = "rounded-xl p-6 border-l-4 border-red-500 bg-red-50 shadow-sm flex flex-col gap-2";
+            document.getElementById('res-irl').textContent = "ERROR";
+            document.getElementById('res-status').className = "px-4 py-1.5 rounded-full font-bold text-sm tracking-wide bg-red-200 text-red-800";
+            document.getElementById('res-status').textContent = "FAILED";
+            
+            document.getElementById('date-row').classList.add('hidden');
+            document.getElementById('notify-block').classList.add('hidden');
+            
+            const msgEl = document.getElementById('res-msg');
+            msgEl.classList.remove('hidden');
+            msgEl.textContent = msg;
+
+            container.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>

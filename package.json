@@ -1,0 +1,9 @@
+{
+  "name": "visa-tracker",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "python3 -c \"import sys; import urllib.request; urllib.request.urlretrieve('https://bootstrap.pypa.io/get-pip.py', 'get-pip.py')\" && python3 get-pip.py --break-system-packages && python3 -m pip install -r api/requirements.txt --break-system-packages",
+    "start": "python3 api/main.py",
+    "dev": "npm run build && npm run start"
+  }
+}
