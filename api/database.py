@@ -177,3 +177,19 @@ def mark_subscription_notified(sub_id):
             text(f'UPDATE subscriptions SET is_notified = {true_val} WHERE id = :id'),
             {"id": sub_id}
         )
+
+def get_all_subscriptions():
+    with engine.connect() as conn:
+        rows = conn.execute(
+            text('SELECT id, irl_number, email, is_notified, created_at FROM subscriptions ORDER BY created_at DESC')
+        ).fetchall()
+        
+        return [
+            {
+                "id": r[0],
+                "irl_number": r[1],
+                "email": r[2],
+                "is_notified": bool(r[3]),
+                "created_at": str(r[4])
+            } for r in rows
+        ]

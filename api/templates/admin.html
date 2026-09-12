@@ -8,10 +8,9 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body class="bg-gray-50 min-h-screen font-sans text-gray-800 flex flex-col">
-
     <!-- Header -->
     <header class="bg-gray-900 shadow-sm py-4 text-white">
-        <div class="max-w-6xl mx-auto px-4 flex items-center justify-between">
+        <div class="max-w-7xl mx-auto px-4 flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <i class="fa-solid fa-lock text-green-400"></i>
                 <h1 class="text-xl font-bold">Admin Dashboard</h1>
@@ -23,7 +22,7 @@
     </header>
 
     <!-- Main Content -->
-    <main class="flex-grow p-4 max-w-6xl mx-auto w-full mt-6">
+    <main class="flex-grow p-4 max-w-7xl mx-auto w-full mt-6">
         
         <div id="auth-panel" class="bg-white rounded-xl shadow-md w-full max-w-md mx-auto p-8 text-center transition-all">
             <h2 class="text-lg font-semibold mb-4 text-gray-700">Admin Login</h2>
@@ -38,55 +37,118 @@
             <p id="login-error" class="text-red-500 text-sm mt-3 hidden">Invalid token.</p>
         </div>
 
-        <div id="records-panel" class="bg-white rounded-xl shadow-md w-full p-6 hidden">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-semibold text-gray-800">Scraped Decision Records</h2>
-                <div class="flex gap-2">
-                    <button id="force-sync-btn" class="text-sm bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded flex items-center gap-2 transition-colors font-medium shadow-sm">
-                        <i class="fa-solid fa-cloud-arrow-down"></i> Force Sync Now
-                    </button>
-                    <button id="refresh-btn" class="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded flex items-center gap-2 transition-colors">
+        <div id="dashboard-panel" class="hidden w-full space-y-8">
+            <div class="flex gap-4 border-b border-gray-200">
+                <button id="tab-records" class="pb-2 px-1 font-medium text-blue-600 border-b-2 border-blue-600">Decision Records</button>
+                <button id="tab-subs" class="pb-2 px-1 font-medium text-gray-500 hover:text-gray-700">Email Subscriptions</button>
+            </div>
+
+            <div id="records-panel" class="bg-white rounded-xl shadow-md w-full p-6 block">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-semibold text-gray-800">Scraped Decision Records</h2>
+                    <div class="flex gap-2">
+                        <button id="force-sync-btn" class="text-sm bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded flex items-center gap-2 transition-colors font-medium shadow-sm">
+                            <i class="fa-solid fa-cloud-arrow-down"></i> Force Sync Now
+                        </button>
+                        <button id="refresh-btn" class="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded flex items-center gap-2 transition-colors">
+                            <i class="fa-solid fa-rotate-right"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+                <p id="sync-status-msg" class="text-sm mb-4 hidden"></p>
+                
+                <div class="overflow-x-auto rounded-lg border border-gray-200">
+                    <table class="min-w-full divide-y divide-gray-200 text-sm text-left">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 font-semibold text-gray-700">IRL Number</th>
+                                <th scope="col" class="px-6 py-3 font-semibold text-gray-700">Status</th>
+                                <th scope="col" class="px-6 py-3 font-semibold text-gray-700">Decision Date</th>
+                                <th scope="col" class="px-6 py-3 font-semibold text-gray-700">Last Synced (UTC)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="records-table-body" class="bg-white divide-y divide-gray-200">
+                            <!-- Dynamic Rows -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination Controls -->
+                <div class="mt-4 flex justify-between items-center text-sm text-gray-500">
+                    <div id="records-count"></div>
+                    <div class="flex gap-2 items-center">
+                        <button id="prev-page-btn" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded disabled:opacity-50">Previous</button>
+                        <span id="page-indicator" class="font-medium text-gray-700">Page 1</span>
+                        <button id="next-page-btn" class="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded disabled:opacity-50">Next</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="subs-panel" class="bg-white rounded-xl shadow-md w-full p-6 hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-semibold text-gray-800">Email Subscriptions</h2>
+                    <button id="refresh-subs-btn" class="text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded flex items-center gap-2 transition-colors">
                         <i class="fa-solid fa-rotate-right"></i> Refresh
                     </button>
                 </div>
+                
+                <div class="overflow-x-auto rounded-lg border border-gray-200">
+                    <table class="min-w-full divide-y divide-gray-200 text-sm text-left">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 font-semibold text-gray-700">ID</th>
+                                <th scope="col" class="px-6 py-3 font-semibold text-gray-700">IRL Number</th>
+                                <th scope="col" class="px-6 py-3 font-semibold text-gray-700">Email</th>
+                                <th scope="col" class="px-6 py-3 font-semibold text-gray-700">Status</th>
+                                <th scope="col" class="px-6 py-3 font-semibold text-gray-700">Subscribed At (UTC)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="subs-table-body" class="bg-white divide-y divide-gray-200">
+                            <!-- Dynamic Rows -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-4 text-sm text-gray-500" id="subs-count"></div>
             </div>
-            <p id="sync-status-msg" class="text-sm mb-4 hidden"></p>
-            
-            <div class="overflow-x-auto rounded-lg border border-gray-200">
-                <table class="min-w-full divide-y divide-gray-200 text-sm text-left">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 font-semibold text-gray-700">IRL Number</th>
-                            <th scope="col" class="px-6 py-3 font-semibold text-gray-700">Status</th>
-                            <th scope="col" class="px-6 py-3 font-semibold text-gray-700">Decision Date</th>
-                            <th scope="col" class="px-6 py-3 font-semibold text-gray-700">Last Synced (UTC)</th>
-                        </tr>
-                    </thead>
-                    <tbody id="records-table-body" class="bg-white divide-y divide-gray-200">
-                        <!-- Dynamic Rows -->
-                    </tbody>
-                </table>
-            </div>
-            <div class="mt-4 text-sm text-gray-500" id="records-count"></div>
-        </div>
 
+        </div>
     </main>
 
     <script>
         let apiToken = "";
+        let allRecords = [];
+        let currentPage = 1;
+        const ITEMS_PER_PAGE = 100;
+
+        // Tab Switching
+        document.getElementById('tab-records').addEventListener('click', () => {
+            document.getElementById('tab-records').className = "pb-2 px-1 font-medium text-blue-600 border-b-2 border-blue-600";
+            document.getElementById('tab-subs').className = "pb-2 px-1 font-medium text-gray-500 hover:text-gray-700";
+            document.getElementById('records-panel').classList.remove('hidden');
+            document.getElementById('subs-panel').classList.add('hidden');
+            loadRecords();
+        });
+        document.getElementById('tab-subs').addEventListener('click', () => {
+            document.getElementById('tab-subs').className = "pb-2 px-1 font-medium text-blue-600 border-b-2 border-blue-600";
+            document.getElementById('tab-records').className = "pb-2 px-1 font-medium text-gray-500 hover:text-gray-700";
+            document.getElementById('subs-panel').classList.remove('hidden');
+            document.getElementById('records-panel').classList.add('hidden');
+            loadSubscriptions();
+        });
 
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const token = document.getElementById('admin-token').value.trim();
             if (!token) return;
-
             apiToken = token;
+            
+            document.getElementById('auth-panel').classList.add('hidden');
+            document.getElementById('dashboard-panel').classList.remove('hidden');
             await loadRecords();
         });
 
-        document.getElementById('refresh-btn').addEventListener('click', () => {
-            loadRecords();
-        });
+        document.getElementById('refresh-btn').addEventListener('click', loadRecords);
+        document.getElementById('refresh-subs-btn').addEventListener('click', loadSubscriptions);
 
         document.getElementById('force-sync-btn').addEventListener('click', async () => {
             const btn = document.getElementById('force-sync-btn');
@@ -107,7 +169,7 @@
                 if (res.ok) {
                     msg.className = "text-sm mb-4 text-green-600 font-medium";
                     msg.textContent = `Success! ${data.message}. Records processed: ${data.records_processed}. Emails sent: ${data.notifications_sent}.`;
-                    loadRecords(); // reload table to see updated timestamps
+                    loadRecords(); 
                 } else {
                     msg.className = "text-sm mb-4 text-red-600 font-medium";
                     msg.textContent = `Sync failed: ${data.detail || data.error || 'Unknown error'}`;
@@ -124,52 +186,118 @@
         async function loadRecords() {
             document.getElementById('login-error').classList.add('hidden');
             const tbody = document.getElementById('records-table-body');
-            const countEl = document.getElementById('records-count');
+            tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center">Loading...</td></tr>';
             
             try {
                 const res = await fetch('/api/admin/records', {
-                    headers: {
-                        'x-token': apiToken
-                    }
+                    headers: { 'x-token': apiToken }
                 });
-
                 if (res.status === 401) {
+                    document.getElementById('dashboard-panel').classList.add('hidden');
+                    document.getElementById('auth-panel').classList.remove('hidden');
                     document.getElementById('login-error').classList.remove('hidden');
                     return;
                 }
                 
                 if (!res.ok) throw new Error("Failed to fetch records.");
+                allRecords = await res.json();
+                currentPage = 1;
+                renderRecordsPage();
+            } catch (err) {
+                console.error(err);
+                tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center text-red-500">Error loading records</td></tr>';
+            }
+        }
 
+        function renderRecordsPage() {
+            const tbody = document.getElementById('records-table-body');
+            const countEl = document.getElementById('records-count');
+            
+            const totalPages = Math.ceil(allRecords.length / ITEMS_PER_PAGE) || 1;
+            const startIdx = (currentPage - 1) * ITEMS_PER_PAGE;
+            const endIdx = startIdx + ITEMS_PER_PAGE;
+            const pageData = allRecords.slice(startIdx, endIdx);
+
+            tbody.innerHTML = "";
+            countEl.textContent = `Total Records: ${allRecords.length}`;
+            document.getElementById('page-indicator').textContent = `Page ${currentPage} of ${totalPages}`;
+            
+            document.getElementById('prev-page-btn').disabled = currentPage === 1;
+            document.getElementById('next-page-btn').disabled = currentPage === totalPages || totalPages === 0;
+
+            pageData.forEach(record => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50";
+                let statusClass = "text-gray-800 bg-gray-100";
+                const s = record.status.toLowerCase();
+                if (s.includes('approv') || s.includes('grant')) statusClass = "text-green-800 bg-green-100";
+                else if (s.includes('refus') || s.includes('reject')) statusClass = "text-red-800 bg-red-100";
+                
+                tr.innerHTML = `
+                    <td class="px-6 py-4 font-mono font-medium text-gray-900">${record.irl_number}</td>
+                    <td class="px-6 py-4"><span class="px-2 py-1 rounded-md text-xs font-bold uppercase ${statusClass}">${record.status}</span></td>
+                    <td class="px-6 py-4 text-gray-600">${record.decision_date}</td>
+                    <td class="px-6 py-4 text-gray-500 text-xs">${new Date(record.last_updated).toLocaleString()}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        document.getElementById('prev-page-btn').addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                renderRecordsPage();
+            }
+        });
+
+        document.getElementById('next-page-btn').addEventListener('click', () => {
+            const totalPages = Math.ceil(allRecords.length / ITEMS_PER_PAGE);
+            if (currentPage < totalPages) {
+                currentPage++;
+                renderRecordsPage();
+            }
+        });
+
+        async function loadSubscriptions() {
+            const tbody = document.getElementById('subs-table-body');
+            const countEl = document.getElementById('subs-count');
+            tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center">Loading...</td></tr>';
+            
+            try {
+                const res = await fetch('/api/admin/subscriptions', {
+                    headers: { 'x-token': apiToken }
+                });
+                
+                if (!res.ok) throw new Error("Failed to fetch subscriptions.");
                 const data = await res.json();
                 
-                // Show records panel
-                document.getElementById('auth-panel').classList.add('hidden');
-                document.getElementById('records-panel').classList.remove('hidden');
-
                 tbody.innerHTML = "";
-                countEl.textContent = `Showing ${data.length} records.`;
+                countEl.textContent = `Total Subscriptions: ${data.length}`;
+                
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No subscriptions found.</td></tr>';
+                    return;
+                }
 
-                data.forEach(record => {
+                data.forEach(sub => {
                     const tr = document.createElement('tr');
                     tr.className = "hover:bg-gray-50";
-
-                    let statusClass = "text-gray-800 bg-gray-100";
-                    const s = record.status.toLowerCase();
-                    if (s.includes('approv') || s.includes('grant')) statusClass = "text-green-800 bg-green-100";
-                    else if (s.includes('refus') || s.includes('reject')) statusClass = "text-red-800 bg-red-100";
-
+                    const statusBadge = sub.is_notified 
+                        ? `<span class="px-2 py-1 rounded-md text-xs font-bold uppercase text-green-800 bg-green-100">Notified</span>`
+                        : `<span class="px-2 py-1 rounded-md text-xs font-bold uppercase text-yellow-800 bg-yellow-100">Pending</span>`;
+                    
                     tr.innerHTML = `
-                        <td class="px-6 py-4 font-mono font-medium text-gray-900">${record.irl_number}</td>
-                        <td class="px-6 py-4"><span class="px-2 py-1 rounded-md text-xs font-bold uppercase ${statusClass}">${record.status}</span></td>
-                        <td class="px-6 py-4 text-gray-600">${record.decision_date}</td>
-                        <td class="px-6 py-4 text-gray-500 text-xs">${new Date(record.last_updated).toLocaleString()}</td>
+                        <td class="px-6 py-4 text-gray-500">${sub.id}</td>
+                        <td class="px-6 py-4 font-mono font-medium text-gray-900">${sub.irl_number}</td>
+                        <td class="px-6 py-4 text-gray-900">${sub.email}</td>
+                        <td class="px-6 py-4">${statusBadge}</td>
+                        <td class="px-6 py-4 text-gray-500 text-xs">${new Date(sub.created_at).toLocaleString()}</td>
                     `;
                     tbody.appendChild(tr);
                 });
-
             } catch (err) {
                 console.error(err);
-                alert("An error occurred while fetching records.");
+                tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-red-500">Error loading subscriptions</td></tr>';
             }
         }
     </script>

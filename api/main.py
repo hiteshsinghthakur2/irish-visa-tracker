@@ -7,7 +7,7 @@ import threading
 
 from database import (
     init_db, upsert_decisions, get_decision, get_db_status, 
-    get_all_decisions, add_subscription, get_pending_subscriptions_with_decisions,
+    get_all_decisions, add_subscription, get_pending_subscriptions_with_decisions, get_all_subscriptions,
     mark_subscription_notified
 )
 from scraper import run_scraper
@@ -184,3 +184,7 @@ def read_admin():
 if __name__ == "__main__":
     os.makedirs("api/templates", exist_ok=True)
     uvicorn.run("main:app", host="0.0.0.0", port=3000)
+
+@app.get("/api/admin/subscriptions", dependencies=[Depends(verify_token)])
+def api_admin_subscriptions():
+    return get_all_subscriptions()
